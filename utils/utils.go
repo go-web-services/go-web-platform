@@ -42,13 +42,11 @@ func SendRequest(method, url string, payload any, outputDTO any, context *gin.Co
 	req.Header.Set("Content-Type", "application/json")
 
 	// Setting custom headers
-	traceID := context.GetHeader(platformConstants.TraceIDHeader)
-	headers := map[string]string{
-		platformConstants.TraceIDHeader: traceID,
-	}
-
-	for key, value := range headers {
-		req.Header.Set(key, value)
+	if context != nil {
+		traceID := context.GetHeader(platformConstants.TraceIDHeader)
+		if traceID != "" {
+			req.Header.Set(platformConstants.TraceIDHeader, traceID)
+		}
 	}
 
 	client := &http.Client{}
