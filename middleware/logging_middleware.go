@@ -75,7 +75,7 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 
 				// Create a new reader for logging
 				bodyReader := io.NopCloser(bytes.NewBuffer(bodyBytes))
-				requestBody = readAndMaskJSONBody(bodyReader, log, config, traceID)
+				requestBody = readAndMaskJSONBody(bodyReader, log, config, traceID, contentType)
 
 				// Restore the original body with the raw bytes
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -119,7 +119,8 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 		if config.LogResponseBody && writer.body.Len() > 0 {
 			// Create a reader from the captured response body
 			bodyReader := io.NopCloser(bytes.NewReader(writer.body.Bytes()))
-			responseBody = readAndMaskJSONBody(bodyReader, log, config, traceID)
+			contentType := writer.Header().Get("Content-Type")
+			responseBody = readAndMaskJSONBody(bodyReader, log, config, traceID, contentType)
 		}
 
 		// Log outgoing response
@@ -180,9 +181,13 @@ func extractOrGenerateTraceID(c *gin.Context) string {
 
 // readAndMaskJSONBody reads a JSON body from an io.ReadCloser, masks sensitive data,
 // and returns the formatted JSON string
-func readAndMaskJSONBody(body io.ReadCloser, log logger.Logger, config types.LoggingConfig, traceID string) string {
+func readAndMaskJSONBody(body io.ReadCloser, log logger.Logger, config types.LoggingConfig, traceID string, contentType string) string {
 	if body == nil {
 		return ""
+	}
+
+	if isBinaryType(contentType) {
+		return "<file_content>"
 	}
 
 	bodyBytes, err := io.ReadAll(body)
@@ -293,4 +298,16 @@ func isSensitiveField(field string, sensitiveFields []string) bool {
 		}
 	}
 	return false
+}
+
+// isBinaryType checks if the content type indicates a binary file
+func isBinaryType(contentType string) bool {
+	contentType = strings.ToLower(contentType)
+	return strings.HasPrefix(contentType, "image/") ||
+		strings.HasPrefix(contentType, "video/") ||
+		strings.HasPrefix(contentType, "audio/") ||
+		strings.HasPrefix(contentType, "application/pdf") ||
+		strings.HasPrefix(contentType, "application/octet-stream") ||
+		strings.HasPrefix(contentType, "application/zip") ||
+		strings.HasPrefix(contentType, "application/x-gzip")
 }
