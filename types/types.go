@@ -35,6 +35,9 @@ type LoggingConfig struct {
 	LogResponseBody bool
 	// MaxFieldLength is the maximum length for field values in logs
 	MaxFieldLength int
+	// PrettyLog when true uses multi-line messages and indented JSON; when false, logs are one line with compact JSON.
+	// DefaultLoggingConfig sets this to true; the zero value is false (compact).
+	PrettyLog bool
 }
 
 // ErrorHandler is an interface for handling known errors

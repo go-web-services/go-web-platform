@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ func DefaultLoggingConfig() types.LoggingConfig {
 		LogRequestBody:  true,
 		LogResponseBody: true,
 		MaxFieldLength:  1000,
+		PrettyLog:       true,
 	}
 }
 
@@ -89,14 +91,22 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 		requestHeaders := formatHeaders(c.Request.Header, config)
 
 		// Log incoming request
-		log.Info("\nIncoming request:",
-			"\ntraceID:", traceID,
-			"\nmethod:", c.Request.Method,
-			"\npath:", c.Request.URL.Path,
-			"\nquery:", truncateString(c.Request.URL.RawQuery, config.MaxFieldLength),
-			"\nheaders:", requestHeaders,
-			"\nbody:", requestBody,
-		)
+		query := truncateString(c.Request.URL.RawQuery, config.MaxFieldLength)
+		if config.PrettyLog {
+			log.Info("\nIncoming request:",
+				"\ntraceID:", traceID,
+				"\nmethod:", c.Request.Method,
+				"\npath:", c.Request.URL.Path,
+				"\nquery:", query,
+				"\nheaders:", requestHeaders,
+				"\nbody:", requestBody,
+			)
+		} else {
+			log.Info(fmt.Sprintf(
+				"Incoming request traceID=%s method=%s path=%s query=%s headers=%s body=%s",
+				traceID, c.Request.Method, c.Request.URL.Path, oneLineForLog(query), oneLineForLog(requestHeaders), oneLineForLog(requestBody),
+			))
+		}
 
 		// Create a custom response writer to capture the response
 		writer := &responseWriter{
@@ -124,16 +134,35 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 		}
 
 		// Log outgoing response
-		log.Info("\nOutgoing response:",
-			"\ntraceID:", traceID,
-			"\nmethod:", c.Request.Method,
-			"\npath:", c.Request.URL.Path,
-			"\nstatus:", c.Writer.Status(),
-			"\nduration:", duration.String(),
-			"\nheaders:", responseHeaders,
-			"\nbody:", responseBody,
-		)
+		if config.PrettyLog {
+			log.Info("\nOutgoing response:",
+				"\ntraceID:", traceID,
+				"\nmethod:", c.Request.Method,
+				"\npath:", c.Request.URL.Path,
+				"\nstatus:", c.Writer.Status(),
+				"\nduration:", duration.String(),
+				"\nheaders:", responseHeaders,
+				"\nbody:", responseBody,
+			)
+		} else {
+			log.Info(fmt.Sprintf(
+				"Outgoing response traceID=%s method=%s path=%s status=%d duration=%s headers=%s body=%s",
+				traceID, c.Request.Method, c.Request.URL.Path, c.Writer.Status(), duration.String(),
+				oneLineForLog(responseHeaders), oneLineForLog(responseBody),
+			))
+		}
 	}
+}
+
+// oneLineForLog collapses newlines and carriage returns so a log line stays single-line.
+func oneLineForLog(s string) string {
+	if s == "" {
+		return s
+	}
+	s = strings.ReplaceAll(s, "\r\n", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	return strings.Join(strings.Fields(s), " ")
 }
 
 // truncateString truncates a string if it exceeds maxLength
@@ -150,10 +179,29 @@ func formatHeaders(headers http.Header, config types.LoggingConfig) string {
 		return "no headers"
 	}
 
-	var sb strings.Builder
+	keys := make([]string, 0, len(headers))
+	for k := range headers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
-	// Get all header keys and sort them for consistent output
-	for key, values := range headers {
+	if !config.PrettyLog {
+		parts := make([]string, 0, len(keys))
+		for _, key := range keys {
+			value := strings.Join(headers[key], ", ")
+			if isSensitiveField(key, config.SensitiveFields) {
+				value = "********"
+			} else {
+				value = truncateString(value, config.MaxFieldLength)
+			}
+			parts = append(parts, fmt.Sprintf("%s: %s", key, value))
+		}
+		return strings.Join(parts, "; ")
+	}
+
+	var sb strings.Builder
+	for _, key := range keys {
+		values := headers[key]
 		value := strings.Join(values, ", ")
 		if isSensitiveField(key, config.SensitiveFields) {
 			value = "********"
@@ -215,10 +263,12 @@ func readAndMaskJSONBody(body io.ReadCloser, log logger.Logger, config types.Log
 	// Mask sensitive data and truncate long values
 	maskedJSON := maskSensitiveData(jsonData, config)
 
-	// Format JSON based on config
 	var formattedJSON []byte
-	formattedJSON, err = json.MarshalIndent(maskedJSON, "", "  ")
-
+	if config.PrettyLog {
+		formattedJSON, err = json.MarshalIndent(maskedJSON, "", "  ")
+	} else {
+		formattedJSON, err = json.Marshal(maskedJSON)
+	}
 	if err != nil {
 		log.Warn("Failed to format JSON",
 			"traceID", traceID,
