@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Lomank123/go-web-platform/constants"
-	"github.com/Lomank123/go-web-platform/logger"
-	"github.com/Lomank123/go-web-platform/types"
+	"github.com/go-web-services/go-web-platform/constants"
+	"github.com/go-web-services/go-web-platform/logger"
+	"github.com/go-web-services/go-web-platform/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

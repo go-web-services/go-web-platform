@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	platformConstants "github.com/Lomank123/go-web-platform/constants"
-	platformError "github.com/Lomank123/go-web-platform/error"
-	"github.com/Lomank123/go-web-platform/types"
+	platformConstants "github.com/go-web-services/go-web-platform/constants"
+	platformError "github.com/go-web-services/go-web-platform/error"
+	"github.com/go-web-services/go-web-platform/types"
 )
 
 // GetEnv returns the value of the environment variable specified by key.

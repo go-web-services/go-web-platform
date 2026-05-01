@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	platformConstants "github.com/Lomank123/go-web-platform/constants"
-	platformError "github.com/Lomank123/go-web-platform/error"
-	"github.com/Lomank123/go-web-platform/logger"
+	platformConstants "github.com/go-web-services/go-web-platform/constants"
+	platformError "github.com/go-web-services/go-web-platform/error"
+	"github.com/go-web-services/go-web-platform/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )

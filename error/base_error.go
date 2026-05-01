@@ -3,7 +3,7 @@ package error
 import (
 	"net/http"
 
-	"github.com/Lomank123/go-web-platform/types"
+	"github.com/go-web-services/go-web-platform/types"
 )
 
 // BaseError is the general-purpose domain error. It implements HTTPError.

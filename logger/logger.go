@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Lomank123/go-web-platform/constants"
-	"github.com/Lomank123/go-web-platform/types"
+	"github.com/go-web-services/go-web-platform/constants"
+	"github.com/go-web-services/go-web-platform/types"
 	"github.com/mattn/go-isatty"
 )
 

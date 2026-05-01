@@ -3,7 +3,7 @@ package error
 import (
 	"net/http"
 
-	"github.com/Lomank123/go-web-platform/constants"
+	"github.com/go-web-services/go-web-platform/constants"
 )
 
 var (

@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/Lomank123/go-web-platform/logger"
+	"github.com/go-web-services/go-web-platform/logger"
 	"github.com/gin-gonic/gin"
 )
 

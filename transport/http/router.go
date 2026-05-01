@@ -1,10 +1,10 @@
 package http
 
 import (
-	"github.com/Lomank123/go-web-platform/constants"
-	"github.com/Lomank123/go-web-platform/logger"
-	http "github.com/Lomank123/go-web-platform/transport/http/handler"
-	"github.com/Lomank123/go-web-platform/types"
+	"github.com/go-web-services/go-web-platform/constants"
+	"github.com/go-web-services/go-web-platform/logger"
+	http "github.com/go-web-services/go-web-platform/transport/http/handler"
+	"github.com/go-web-services/go-web-platform/types"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
