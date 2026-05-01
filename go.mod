@@ -1,4 +1,4 @@
-module github.com/Lomank123/go-web-platform
+module github.com/go-web-services/go-web-platform
 
 go 1.23.4
 
