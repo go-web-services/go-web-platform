@@ -1,6 +1,6 @@
 # go-web-platform
 
-**Module:** `github.com/Lomank123/go-web-platform`
+**Module:** `github.com/go-web-services/go-web-platform`
 
 Shared Go library imported by all services in the go-web ecosystem. It provides the common plumbing — structured logging, request/response logging middleware, centralized error handling, HTTP response helpers, database transaction management, and inter-service HTTP communication — so each individual service only needs to implement its own business logic.
 
@@ -24,7 +24,7 @@ Shared Go library imported by all services in the go-web ecosystem. It provides 
 
 ## entrypoint
 
-**Import:** `github.com/Lomank123/go-web-platform/entrypoint`
+**Import:** `github.com/go-web-services/go-web-platform/entrypoint`
 
 ### What it does
 
@@ -54,9 +54,9 @@ func SetupPlatform(
 ```go
 // cmd/app/main.go
 import (
-    platform     "github.com/Lomank123/go-web-platform/entrypoint"
-    "github.com/Lomank123/go-web-platform/logger"
-    platformMiddleware "github.com/Lomank123/go-web-platform/middleware"
+    platform     "github.com/go-web-services/go-web-platform/entrypoint"
+    "github.com/go-web-services/go-web-platform/logger"
+    platformMiddleware "github.com/go-web-services/go-web-platform/middleware"
 )
 
 func main() {
@@ -84,7 +84,7 @@ func main() {
 
 ## logger
 
-**Import:** `github.com/Lomank123/go-web-platform/logger`
+**Import:** `github.com/go-web-services/go-web-platform/logger`
 
 ### What it does
 
@@ -121,7 +121,7 @@ logg.Fatal("Unrecoverable startup error: ", err)
 
 ## middleware
 
-**Import:** `github.com/Lomank123/go-web-platform/middleware`
+**Import:** `github.com/go-web-services/go-web-platform/middleware`
 
 ### LoggingMiddleware
 
@@ -189,7 +189,7 @@ func (h *myHandler) CreateV1(c *gin.Context) {
 
 ## error
 
-**Import:** `github.com/Lomank123/go-web-platform/error`
+**Import:** `github.com/go-web-services/go-web-platform/error`
 
 All error-related definitions live here: the `HTTPError` interface, error structs, constructors, pre-defined sentinel errors, and JSON response shapes.
 
@@ -279,7 +279,7 @@ _ = c.Error(err)  // forward status + code as-is
 
 ## transport/http
 
-**Import:** `github.com/Lomank123/go-web-platform/transport/http`
+**Import:** `github.com/go-web-services/go-web-platform/transport/http`
 
 ### `Ok`
 
@@ -303,7 +303,7 @@ Called by `SetupPlatform` — services do not call this directly. It registers:
 
 ## db/session
 
-**Import:** `github.com/Lomank123/go-web-platform/db/session`
+**Import:** `github.com/go-web-services/go-web-platform/db/session`
 
 ### What it does
 
@@ -407,7 +407,7 @@ func (r *userRepository) Create(ctx context.Context, ...) (*domain.User, error) 
 
 ## utils
 
-**Import:** `github.com/Lomank123/go-web-platform/utils`
+**Import:** `github.com/go-web-services/go-web-platform/utils`
 
 ### `GetEnv`
 
@@ -450,7 +450,7 @@ if err != nil {
 
 ## constants
 
-**Import:** `github.com/Lomank123/go-web-platform/constants`
+**Import:** `github.com/go-web-services/go-web-platform/constants`
 
 ### Error codes
 
@@ -486,7 +486,7 @@ const TraceIDHeader = "X-Trace-ID"
 
 ## types
 
-**Import:** `github.com/Lomank123/go-web-platform/types`
+**Import:** `github.com/go-web-services/go-web-platform/types`
 
 Shared primitive type definitions used across multiple packages to avoid import cycles.
 

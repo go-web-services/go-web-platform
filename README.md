@@ -7,7 +7,7 @@ Shared Go library for the go-web ecosystem. Provides structured logging, request
 ## Installation
 
 ```bash
-go get github.com/Lomank123/go-web-platform
+go get github.com/go-web-services/go-web-platform
 ```
 
 Requires Go 1.23+.
@@ -22,9 +22,9 @@ Call `SetupPlatform` once in `main.go` before registering your application route
 package main
 
 import (
-    platform   "github.com/Lomank123/go-web-platform/entrypoint"
-    "github.com/Lomank123/go-web-platform/logger"
-    mw         "github.com/Lomank123/go-web-platform/middleware"
+    platform   "github.com/go-web-services/go-web-platform/entrypoint"
+    "github.com/go-web-services/go-web-platform/logger"
+    mw         "github.com/go-web-services/go-web-platform/middleware"
     "github.com/gin-gonic/gin"
 )
 
@@ -60,7 +60,7 @@ All errors flow through the `ErrorHandlerMiddleware` via `c.Error(err)`. Handler
 ### Using pre-defined errors
 
 ```go
-import platformError "github.com/Lomank123/go-web-platform/error"
+import platformError "github.com/go-web-services/go-web-platform/error"
 
 // In a service or repository
 if user == nil {
@@ -82,7 +82,7 @@ if user == nil {
 ```go
 // internal/error/errors.go
 import (
-    platformError "github.com/Lomank123/go-web-platform/error"
+    platformError "github.com/go-web-services/go-web-platform/error"
     "net/http"
 )
 
@@ -100,8 +100,8 @@ var (
 
 ```go
 import (
-    platformError    "github.com/Lomank123/go-web-platform/error"
-    platformResponse "github.com/Lomank123/go-web-platform/transport/http"
+    platformError    "github.com/go-web-services/go-web-platform/error"
+    platformResponse "github.com/go-web-services/go-web-platform/transport/http"
 )
 
 func (h *handler) CreateV1(c *gin.Context) {
@@ -142,9 +142,9 @@ Field names in validation errors match the `json` struct tag, not the Go field n
 
 ```go
 import (
-    platformError "github.com/Lomank123/go-web-platform/error"
-    platformUtils  "github.com/Lomank123/go-web-platform/utils"
-    "github.com/Lomank123/go-web-platform/constants"
+    platformError "github.com/go-web-services/go-web-platform/error"
+    platformUtils  "github.com/go-web-services/go-web-platform/utils"
+    "github.com/go-web-services/go-web-platform/constants"
 )
 
 func (s *client) GetUser(c *gin.Context, id string) (*dto.UserDTO, error) {
@@ -173,7 +173,7 @@ if err != nil {
 ## Database transactions
 
 ```go
-import "github.com/Lomank123/go-web-platform/db/session"
+import "github.com/go-web-services/go-web-platform/db/session"
 
 // main.go
 pgSession := session.NewPostgres(pgPool)
@@ -206,7 +206,7 @@ func (r *repo) Create(ctx context.Context, ...) (*domain.User, error) {
 ## Logging
 
 ```go
-import "github.com/Lomank123/go-web-platform/logger"
+import "github.com/go-web-services/go-web-platform/logger"
 
 logg := logger.NewLogger(cfg.App.Env)
 
@@ -224,15 +224,15 @@ Pass `logg` down to components that need it. Do not use the standard `log` packa
 
 | Package | Import path |
 |---|---|
-| Bootstrap | `github.com/Lomank123/go-web-platform/entrypoint` |
-| Logger | `github.com/Lomank123/go-web-platform/logger` |
-| Middleware | `github.com/Lomank123/go-web-platform/middleware` |
-| Errors + DTOs | `github.com/Lomank123/go-web-platform/error` |
-| HTTP response | `github.com/Lomank123/go-web-platform/transport/http` |
-| DB transactions | `github.com/Lomank123/go-web-platform/db/session` |
-| Utils | `github.com/Lomank123/go-web-platform/utils` |
-| Constants | `github.com/Lomank123/go-web-platform/constants` |
-| Types | `github.com/Lomank123/go-web-platform/types` |
+| Bootstrap | `github.com/go-web-services/go-web-platform/entrypoint` |
+| Logger | `github.com/go-web-services/go-web-platform/logger` |
+| Middleware | `github.com/go-web-services/go-web-platform/middleware` |
+| Errors + DTOs | `github.com/go-web-services/go-web-platform/error` |
+| HTTP response | `github.com/go-web-services/go-web-platform/transport/http` |
+| DB transactions | `github.com/go-web-services/go-web-platform/db/session` |
+| Utils | `github.com/go-web-services/go-web-platform/utils` |
+| Constants | `github.com/go-web-services/go-web-platform/constants` |
+| Types | `github.com/go-web-services/go-web-platform/types` |
 
 For full API reference and advanced usage see [docs/overview.md](docs/overview.md).  
 For upgrading from a previous version see [docs/migration.md](docs/migration.md).

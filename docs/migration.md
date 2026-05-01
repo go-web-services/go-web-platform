@@ -20,7 +20,36 @@ This guide covers the breaking changes introduced in the error handling refactor
 
 ---
 
-## 1. `SetupPlatform` — remove the `errorHandler` argument
+## 1. Point Git `origin` at the go-web-services org
+
+Run this first so the repo is tied to the organization remote (replace `<service_name>` with the repository name, e.g. `go-service-event`):
+
+```bash
+git remote set-url origin git@github.com:go-web-services/<service_name>.git
+```
+
+Confirm with `git remote -v`.
+
+---
+
+## 2. Document the service in `README.md`
+
+Add or replace the project `README.md` so it:
+
+- Explains what this **service**, **gateway**, or **integration** does: scope, main responsibilities, and how it fits next to other systems.
+- Shows **example payloads** for the main **domain models** as **JSON** (request/response shapes, enums as strings, realistic sample values—not only Go struct dumps).
+
+At the **end** of that `README.md`, include an author section:
+
+```markdown
+## Author
+
+[Lomank](https://lomank.com)
+```
+
+---
+
+## 3. `SetupPlatform` — remove the `errorHandler` argument
 
 ```go
 // Before
@@ -34,7 +63,7 @@ platform.SetupPlatform(router, logg, nil, cfg, env)
 
 ---
 
-## 2. Replace `ErrorHandler` implementations with self-describing errors
+## 4. Replace `ErrorHandler` implementations with self-describing errors
 
 Services that had a custom `ErrorHandler` to map domain errors to HTTP responses should delete it entirely. Instead, define each domain error using `NewErrorWithStatus` so the error carries its own HTTP status.
 
@@ -69,13 +98,13 @@ _ = c.Error(internalError.ErrMyDomain)
 
 ---
 
-## 3. Replace `dto` package imports
+## 5. Replace `dto` package imports
 
 The `dto` package has been removed. Its types now live in the `error` package.
 
 ```go
 // Before
-import platformDTO "github.com/Lomank123/go-web-platform/dto"
+import platformDTO "github.com/go-web-services/go-web-platform/dto"
 
 platformDTO.ErrorDTO{...}
 platformDTO.ValidationErrorDTO{...}
@@ -84,7 +113,7 @@ platformDTO.ValidationErrorItem{...}
 
 ```go
 // After
-import platformError "github.com/Lomank123/go-web-platform/error"
+import platformError "github.com/go-web-services/go-web-platform/error"
 
 platformError.ErrorDTO{...}
 platformError.ValidationErrorDTO{...}
@@ -93,7 +122,7 @@ platformError.ValidationErrorItem{...}
 
 ---
 
-## 4. Replace `RequestError` checks
+## 6. Replace `RequestError` checks
 
 `RequestError` has been removed. `SendRequest` now returns a `*BaseError` carrying the upstream status code and error code. Inspect it the same way as any other `*BaseError`.
 
@@ -131,7 +160,7 @@ _ = c.Error(err)  // BaseError.Status carries the upstream status; middleware re
 
 ---
 
-## 5. Replace response helper calls
+## 7. Replace response helper calls
 
 All error response helpers have been removed. Replace each one with `c.Error` and the equivalent sentinel or constructor.
 
@@ -161,7 +190,7 @@ platformResponse.Error(c, err, http.StatusConflict, myErrorCode)
 
 ---
 
-## 6. Sentinel errors now return correct HTTP status codes
+## 8. Sentinel errors now return correct HTTP status codes
 
 Previously all sentinels mapped to HTTP 400. They now carry their intended status. If your service was compensating by calling a response helper after checking the error type, that compensation is no longer needed — just push the sentinel and let the middleware handle it.
 
@@ -189,7 +218,7 @@ _ = c.Error(err)
 
 ---
 
-## 7. Validation errors now report JSON field names
+## 9. Validation errors now report JSON field names
 
 The validator is now configured to use `json` tag names in validation error responses. No code changes are needed on the server side, but **API clients** must be updated if they were matching on Go struct field names.
 
@@ -211,6 +240,9 @@ The validator is now configured to use `json` tag names in validation error resp
 
 ## Checklist
 
+- [ ] Set `origin` to `git@github.com:go-web-services/<service_name>.git`
+- [ ] Add a `README.md` with service/gateway/integration overview and JSON examples for main domain models
+- [ ] End `README.md` with the Author section (`[Lomank](https://lomank.com)`)
 - [ ] Remove `errorHandler` argument from every `SetupPlatform` call
 - [ ] Delete `internal/error/handler.go` (or equivalent) in each service
 - [ ] Replace each domain error type with `NewError` / `NewErrorWithStatus` sentinel variables
@@ -219,3 +251,9 @@ The validator is now configured to use `json` tag names in validation error resp
 - [ ] Replace all `platformResponse.Unauthorized/Forbidden/NotFound/InternalServerError/BadRequest/Error` calls with `c.Error(...)`
 - [ ] Remove any status-code compensation logic around `ErrEntityNotFound`, `ErrUnauthorized`, and `ErrForbidden`
 - [ ] Update API clients to use lowercase JSON field names in validation error responses
+
+---
+
+## Author
+
+[Lomank](https://lomank.com)
