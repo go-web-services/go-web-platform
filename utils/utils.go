@@ -11,6 +11,7 @@ import (
 
 	platformConstants "github.com/Lomank123/go-web-platform/constants"
 	platformError "github.com/Lomank123/go-web-platform/error"
+	"github.com/Lomank123/go-web-platform/types"
 )
 
 // GetEnv returns the value of the environment variable specified by key.
@@ -24,10 +25,10 @@ func GetEnv(key, fallback string) string {
 	return val
 }
 
-// SendRequest make HTTP request and decode the response body
-// Used for internal services communication only.
+// SendRequest makes an HTTP call to an internal service and decodes the response.
+// On a non-2xx response it returns a *BaseError carrying the upstream status code,
+// error code, and message so callers can inspect or forward it.
 func SendRequest(method, url string, payload any, outputDTO any, context *gin.Context) error {
-
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return platformError.ErrInvalidRequestPayload
@@ -38,13 +39,10 @@ func SendRequest(method, url string, payload any, outputDTO any, context *gin.Co
 		return err
 	}
 
-	// Set default content type
 	req.Header.Set("Content-Type", "application/json")
 
-	// Setting custom headers
 	if context != nil {
-		traceID := context.GetHeader(platformConstants.TraceIDHeader)
-		if traceID != "" {
+		if traceID := context.GetHeader(platformConstants.TraceIDHeader); traceID != "" {
 			req.Header.Set(platformConstants.TraceIDHeader, traceID)
 		}
 	}
@@ -56,24 +54,28 @@ func SendRequest(method, url string, payload any, outputDTO any, context *gin.Co
 	}
 	defer resp.Body.Close()
 
-	// If request was not successful
 	if resp.StatusCode >= http.StatusBadRequest {
-		var errPayload map[string]any
-		err = json.NewDecoder(resp.Body).Decode(&errPayload)
-		if err != nil {
-			return platformError.NewRequestError(http.StatusInternalServerError, map[string]any{
-				"message": fmt.Sprintf("Request failed to internal service with status code %d", resp.StatusCode),
-			})
+		var errPayload platformError.ErrorDTO
+		if err = json.NewDecoder(resp.Body).Decode(&errPayload); err != nil {
+			return platformError.NewErrorWithStatus(
+				platformConstants.InternalServerError,
+				fmt.Sprintf("upstream request failed with status %d", resp.StatusCode),
+				http.StatusInternalServerError,
+			)
 		}
-
-		return platformError.NewRequestError(resp.StatusCode, errPayload)
+		return platformError.NewErrorWithStatus(
+			types.ErrorCode(errPayload.ErrorCode),
+			errPayload.Message,
+			resp.StatusCode,
+		)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(outputDTO)
-	if err != nil {
-		return platformError.NewRequestError(http.StatusInternalServerError, map[string]any{
-			"message": "Request was successful but response body could not be decoded",
-		})
+	if err = json.NewDecoder(resp.Body).Decode(outputDTO); err != nil {
+		return platformError.NewErrorWithStatus(
+			platformConstants.InternalServerError,
+			"upstream request succeeded but response could not be decoded",
+			http.StatusInternalServerError,
+		)
 	}
 
 	return nil

@@ -6,7 +6,6 @@ const (
 	EntityNotFound        types.ErrorCode = "ENTITY_NOT_FOUND"
 	InvalidRequestPayload types.ErrorCode = "INVALID_REQUEST_PAYLOAD"
 	ValidationError       types.ErrorCode = "VALIDATION_ERROR"
-	RequestError          types.ErrorCode = "REQUEST_ERROR"
 	UnauthorizedError     types.ErrorCode = "UNAUTHORIZED_ERROR"
 	InternalServerError   types.ErrorCode = "INTERNAL_SERVER_ERROR"
 	ForbiddenError        types.ErrorCode = "FORBIDDEN_ERROR"

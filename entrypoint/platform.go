@@ -1,22 +1,26 @@
 package platform
 
 import (
-	"github.com/Lomank123/go-web-platform/constants"
+	"reflect"
+	"strings"
 
+	"github.com/Lomank123/go-web-platform/constants"
 	"github.com/Lomank123/go-web-platform/logger"
 	"github.com/Lomank123/go-web-platform/middleware"
 	"github.com/Lomank123/go-web-platform/transport/http"
 	"github.com/Lomank123/go-web-platform/types"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
-// SetupPlatform injects platform specific entities into the project. Entrypoint for platform specific code.
+// SetupPlatform wires platform middleware and routes into the provided router.
+// Call this once in main.go before registering application routes.
 func SetupPlatform(
 	router *gin.Engine,
 	log logger.Logger,
 	readinessFunc func() error,
 	loggingConfig types.LoggingConfig,
-	errorHandler types.ErrorHandler,
 	env types.Environment,
 ) {
 	if env == constants.Production {
@@ -24,13 +28,20 @@ func SetupPlatform(
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Add recovery middleware (throw 500 instead of crashes)
+	// Make validator use json tag names so validation errors report "email" not "Email".
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			return name
+		})
+	}
+
 	router.Use(gin.Recovery())
-
-	// Apply middlewares to the router before adding routes
 	router.Use(middleware.LoggingMiddleware(log, loggingConfig))
-	router.Use(middleware.ErrorHandlerMiddleware(log, errorHandler))
+	router.Use(middleware.ErrorHandlerMiddleware(log))
 
-	// Add platform routes
 	http.AddPlatformRoutes(router, log, readinessFunc, env)
 }
