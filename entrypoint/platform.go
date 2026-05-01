@@ -4,14 +4,14 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/go-web-services/go-web-platform/constants"
 	"github.com/go-web-services/go-web-platform/logger"
 	"github.com/go-web-services/go-web-platform/middleware"
 	"github.com/go-web-services/go-web-platform/transport/http"
 	"github.com/go-web-services/go-web-platform/types"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 )
 
 // SetupPlatform wires platform middleware and routes into the provided router.

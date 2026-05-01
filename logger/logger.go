@@ -35,7 +35,7 @@ type simpleLogger struct {
 }
 
 // NewLogger creates a new Logger instance.
-// When stdout is a terminal and NO_COLOR is unset, level names are printed with ANSI colors.
+// When stdout is a terminal and NO_COLOR is unset, level labels ([INFO], etc.) are printed with ANSI colors.
 func NewLogger(env types.Environment) Logger {
 	return &simpleLogger{
 		env:  env,
@@ -46,14 +46,15 @@ func NewLogger(env types.Environment) Logger {
 }
 
 func (l *simpleLogger) setLevelPrefix(name, colorOpen string) {
+	label := "[" + name + "]"
 	if l.useColor {
-		l.info.SetPrefix(colorOpen + name + ansiReset + " ")
+		l.info.SetPrefix(colorOpen + label + ansiReset + " ")
 		return
 	}
-	l.info.SetPrefix(name + " ")
+	l.info.SetPrefix(label + " ")
 }
 
-// Debug logs a message with DEBUG prefix.
+// Debug logs a message with [DEBUG] prefix.
 func (l *simpleLogger) Debug(args ...interface{}) {
 	if l.env == constants.Development || l.env == constants.Staging || l.env == constants.Local {
 		l.setLevelPrefix("DEBUG", ansiDebug)
@@ -61,25 +62,25 @@ func (l *simpleLogger) Debug(args ...interface{}) {
 	}
 }
 
-// Info logs a message with INFO prefix.
+// Info logs a message with [INFO] prefix.
 func (l *simpleLogger) Info(args ...interface{}) {
 	l.setLevelPrefix("INFO", ansiInfo)
 	l.info.Println(args...)
 }
 
-// Warn logs a message with WARN prefix.
+// Warn logs a message with [WARN] prefix.
 func (l *simpleLogger) Warn(args ...interface{}) {
 	l.setLevelPrefix("WARN", ansiWarn)
 	l.info.Println(args...)
 }
 
-// Error logs a message with ERROR prefix.
+// Error logs a message with [ERROR] prefix.
 func (l *simpleLogger) Error(args ...interface{}) {
 	l.setLevelPrefix("ERROR", ansiError)
 	l.info.Println(args...)
 }
 
-// Fatal logs a message with FATAL prefix and exits the program.
+// Fatal logs a message with [FATAL] prefix and exits the program.
 func (l *simpleLogger) Fatal(args ...interface{}) {
 	l.setLevelPrefix("FATAL", ansiFatal)
 	l.info.Fatal(args...)

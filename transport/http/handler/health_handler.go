@@ -3,8 +3,8 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-web-services/go-web-platform/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/go-web-services/go-web-platform/logger"
 )
 
 type HealthHandler interface {

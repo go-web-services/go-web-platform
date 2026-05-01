@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-web-services/go-web-platform/constants"
 	"github.com/go-web-services/go-web-platform/logger"
 	"github.com/go-web-services/go-web-platform/types"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -30,7 +30,7 @@ func DefaultLoggingConfig() types.LoggingConfig {
 		LogRequestBody:  true,
 		LogResponseBody: true,
 		MaxFieldLength:  1000,
-		PrettyLog:       true,
+		PrettyLog:       false,
 	}
 }
 
@@ -93,7 +93,7 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 		// Log incoming request
 		query := truncateString(c.Request.URL.RawQuery, config.MaxFieldLength)
 		if config.PrettyLog {
-			log.Info("\nIncoming request:",
+			log.Info("Incoming request:",
 				"\ntraceID:", traceID,
 				"\nmethod:", c.Request.Method,
 				"\npath:", c.Request.URL.Path,
@@ -135,7 +135,7 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 
 		// Log outgoing response
 		if config.PrettyLog {
-			log.Info("\nOutgoing response:",
+			log.Info("Outgoing response:",
 				"\ntraceID:", traceID,
 				"\nmethod:", c.Request.Method,
 				"\npath:", c.Request.URL.Path,
@@ -154,15 +154,24 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 	}
 }
 
-// oneLineForLog collapses newlines and carriage returns so a log line stays single-line.
+// oneLineForLog replaces newline and carriage-return runes with spaces so one log record
+// stays one physical line (e.g. for Docker). It does not use strings.Fields, which would
+// break JSON and other values that contain intentional spaces.
 func oneLineForLog(s string) string {
 	if s == "" {
 		return s
 	}
-	s = strings.ReplaceAll(s, "\r\n", " ")
-	s = strings.ReplaceAll(s, "\n", " ")
-	s = strings.ReplaceAll(s, "\r", " ")
-	return strings.Join(strings.Fields(s), " ")
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		switch r {
+		case '\n', '\r':
+			b.WriteByte(' ')
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // truncateString truncates a string if it exceeds maxLength
@@ -257,7 +266,11 @@ func readAndMaskJSONBody(body io.ReadCloser, log logger.Logger, config types.Log
 			"traceID", traceID,
 			"error", err.Error(),
 		)
-		return truncateString(string(bodyBytes), config.MaxFieldLength)
+		raw := truncateString(string(bodyBytes), config.MaxFieldLength)
+		if !config.PrettyLog {
+			return oneLineForLog(raw)
+		}
+		return raw
 	}
 
 	// Mask sensitive data and truncate long values
@@ -274,10 +287,18 @@ func readAndMaskJSONBody(body io.ReadCloser, log logger.Logger, config types.Log
 			"traceID", traceID,
 			"error", err.Error(),
 		)
-		return truncateString(string(bodyBytes), config.MaxFieldLength)
+		raw := truncateString(string(bodyBytes), config.MaxFieldLength)
+		if !config.PrettyLog {
+			return oneLineForLog(raw)
+		}
+		return raw
 	}
 
-	return string(formattedJSON)
+	out := string(formattedJSON)
+	if !config.PrettyLog {
+		return oneLineForLog(out)
+	}
+	return out
 }
 
 // responseWriter is a custom ResponseWriter that captures the response body
