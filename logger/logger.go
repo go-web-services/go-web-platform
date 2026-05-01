@@ -6,17 +6,6 @@ import (
 
 	"github.com/go-web-services/go-web-platform/constants"
 	"github.com/go-web-services/go-web-platform/types"
-	"github.com/mattn/go-isatty"
-)
-
-// ANSI SGR: color only the level label; log body stays default.
-const (
-	ansiReset = "\x1b[0m"
-	ansiDebug = "\x1b[90m" // bright black / gray
-	ansiInfo  = "\x1b[32m" // green
-	ansiWarn  = "\x1b[33m" // yellow
-	ansiError = "\x1b[31m" // red
-	ansiFatal = "\x1b[1;31m"
 )
 
 // Logger is the interface that wraps the basic logging methods.
@@ -29,59 +18,50 @@ type Logger interface {
 }
 
 type simpleLogger struct {
-	env      types.Environment
-	info     *log.Logger
-	useColor bool
+	env  types.Environment
+	info *log.Logger
 }
 
-// NewLogger creates a new Logger instance.
-// When stdout is a terminal and NO_COLOR is unset, level labels ([INFO], etc.) are printed with ANSI colors.
+// NewLogger creates a new Logger instance that writes plain-text, level-prefixed lines to stdout.
 func NewLogger(env types.Environment) Logger {
 	return &simpleLogger{
 		env:  env,
 		info: log.New(os.Stdout, "", log.LstdFlags),
-		useColor: isatty.IsTerminal(os.Stdout.Fd()) &&
-			os.Getenv("NO_COLOR") == "",
 	}
 }
 
-func (l *simpleLogger) setLevelPrefix(name, colorOpen string) {
-	label := "[" + name + "]"
-	if l.useColor {
-		l.info.SetPrefix(colorOpen + label + ansiReset + " ")
-		return
-	}
-	l.info.SetPrefix(label + " ")
+func (l *simpleLogger) setLevelPrefix(name string) {
+	l.info.SetPrefix("[" + name + "] ")
 }
 
 // Debug logs a message with [DEBUG] prefix.
 func (l *simpleLogger) Debug(args ...interface{}) {
 	if l.env == constants.Development || l.env == constants.Staging || l.env == constants.Local {
-		l.setLevelPrefix("DEBUG", ansiDebug)
+		l.setLevelPrefix("DEBUG")
 		l.info.Println(args...)
 	}
 }
 
 // Info logs a message with [INFO] prefix.
 func (l *simpleLogger) Info(args ...interface{}) {
-	l.setLevelPrefix("INFO", ansiInfo)
+	l.setLevelPrefix("INFO")
 	l.info.Println(args...)
 }
 
 // Warn logs a message with [WARN] prefix.
 func (l *simpleLogger) Warn(args ...interface{}) {
-	l.setLevelPrefix("WARN", ansiWarn)
+	l.setLevelPrefix("WARN")
 	l.info.Println(args...)
 }
 
 // Error logs a message with [ERROR] prefix.
 func (l *simpleLogger) Error(args ...interface{}) {
-	l.setLevelPrefix("ERROR", ansiError)
+	l.setLevelPrefix("ERROR")
 	l.info.Println(args...)
 }
 
 // Fatal logs a message with [FATAL] prefix and exits the program.
 func (l *simpleLogger) Fatal(args ...interface{}) {
-	l.setLevelPrefix("FATAL", ansiFatal)
+	l.setLevelPrefix("FATAL")
 	l.info.Fatal(args...)
 }

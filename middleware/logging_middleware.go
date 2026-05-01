@@ -90,23 +90,8 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 		// Format request headers
 		requestHeaders := formatHeaders(c.Request.Header, config)
 
-		// Log incoming request
 		query := truncateString(c.Request.URL.RawQuery, config.MaxFieldLength)
-		if config.PrettyLog {
-			log.Info("Incoming request:",
-				"\ntraceID:", traceID,
-				"\nmethod:", c.Request.Method,
-				"\npath:", c.Request.URL.Path,
-				"\nquery:", query,
-				"\nheaders:", requestHeaders,
-				"\nbody:", requestBody,
-			)
-		} else {
-			log.Info(fmt.Sprintf(
-				"Incoming request traceID=%s method=%s path=%s query=%s headers=%s body=%s",
-				traceID, c.Request.Method, c.Request.URL.Path, oneLineForLog(query), oneLineForLog(requestHeaders), oneLineForLog(requestBody),
-			))
-		}
+		log.Info(requestLogLine(traceID, c.Request.Method, c.Request.URL.Path, query, requestHeaders, requestBody, config.PrettyLog))
 
 		// Create a custom response writer to capture the response
 		writer := &responseWriter{
@@ -133,24 +118,7 @@ func LoggingMiddleware(log logger.Logger, config types.LoggingConfig) gin.Handle
 			responseBody = readAndMaskJSONBody(bodyReader, log, config, traceID, contentType)
 		}
 
-		// Log outgoing response
-		if config.PrettyLog {
-			log.Info("Outgoing response:",
-				"\ntraceID:", traceID,
-				"\nmethod:", c.Request.Method,
-				"\npath:", c.Request.URL.Path,
-				"\nstatus:", c.Writer.Status(),
-				"\nduration:", duration.String(),
-				"\nheaders:", responseHeaders,
-				"\nbody:", responseBody,
-			)
-		} else {
-			log.Info(fmt.Sprintf(
-				"Outgoing response traceID=%s method=%s path=%s status=%d duration=%s headers=%s body=%s",
-				traceID, c.Request.Method, c.Request.URL.Path, c.Writer.Status(), duration.String(),
-				oneLineForLog(responseHeaders), oneLineForLog(responseBody),
-			))
-		}
+		log.Info(responseLogLine(c.Writer.Status(), traceID, c.Request.Method, c.Request.URL.Path, duration, responseHeaders, responseBody, config.PrettyLog))
 	}
 }
 
@@ -172,6 +140,28 @@ func oneLineForLog(s string) string {
 		}
 	}
 	return b.String()
+}
+
+func requestLogLine(traceID, method, path, query, headers, body string, prettyLog bool) string {
+	q := oneLineForLog(query)
+	h, b := headers, body
+	if !prettyLog {
+		h = oneLineForLog(headers)
+		b = oneLineForLog(body)
+	}
+	data := fmt.Sprintf("method=%s path=%s query=%s headers=%s body=%s", method, path, q, h, b)
+	return fmt.Sprintf("Request | Trace ID: %s | %s", traceID, data)
+}
+
+func responseLogLine(status int, traceID, method, path string, duration time.Duration, headers, body string, prettyLog bool) string {
+	h, b := headers, body
+	if !prettyLog {
+		h = oneLineForLog(headers)
+		b = oneLineForLog(body)
+	}
+	data := fmt.Sprintf("method=%s path=%s duration=%s headers=%s body=%s",
+		method, path, duration.String(), h, b)
+	return fmt.Sprintf("Response | %d | Trace ID: %s | %s", status, traceID, data)
 }
 
 // truncateString truncates a string if it exceeds maxLength
@@ -210,8 +200,7 @@ func formatHeaders(headers http.Header, config types.LoggingConfig) string {
 
 	var sb strings.Builder
 	for _, key := range keys {
-		values := headers[key]
-		value := strings.Join(values, ", ")
+		value := strings.Join(headers[key], ", ")
 		if isSensitiveField(key, config.SensitiveFields) {
 			value = "********"
 		} else {
@@ -219,7 +208,6 @@ func formatHeaders(headers http.Header, config types.LoggingConfig) string {
 		}
 		sb.WriteString(fmt.Sprintf("  %s: %s\n", key, value))
 	}
-
 	return sb.String()
 }
 
