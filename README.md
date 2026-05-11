@@ -1,4 +1,6 @@
-# go-web-platform
+Visit main page: [https://github.com/go-web-services](https://github.com/go-web-services)
+
+# Go Web Services - go-web-platform
 
 Shared Go library for the go-web ecosystem. Provides structured logging, request/response middleware, centralized error handling, HTTP helpers, database transaction management, and inter-service communication — so each service only implements its own business logic.
 
