@@ -2,10 +2,12 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -13,6 +15,12 @@ import (
 	platformError "github.com/go-web-services/go-web-platform/error"
 	"github.com/go-web-services/go-web-platform/types"
 )
+
+const defaultUpstreamRequestTimeout = 30 * time.Second
+
+var upstreamHTTPClient = &http.Client{
+	Timeout: defaultUpstreamRequestTimeout,
+}
 
 // GetEnv returns the value of the environment variable specified by key.
 // If the variable is not set, it prints a message and returns the provided fallback value.
@@ -28,27 +36,31 @@ func GetEnv(key, fallback string) string {
 // SendRequest makes an HTTP call to an internal service and decodes the response.
 // On a non-2xx response it returns a *BaseError carrying the upstream status code,
 // error code, and message so callers can inspect or forward it.
-func SendRequest(method, url string, payload any, outputDTO any, context *gin.Context) error {
+func SendRequest(method, url string, payload any, outputDTO any, ginCtx *gin.Context) error {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return platformError.ErrInvalidRequestPayload
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(payloadBytes))
+	reqCtx := context.Background()
+	if ginCtx != nil && ginCtx.Request != nil {
+		reqCtx = ginCtx.Request.Context()
+	}
+
+	req, err := http.NewRequestWithContext(reqCtx, method, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if context != nil {
-		if traceID := context.GetHeader(platformConstants.TraceIDHeader); traceID != "" {
+	if ginCtx != nil {
+		if traceID := ginCtx.GetHeader(platformConstants.TraceIDHeader); traceID != "" {
 			req.Header.Set(platformConstants.TraceIDHeader, traceID)
 		}
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := upstreamHTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
